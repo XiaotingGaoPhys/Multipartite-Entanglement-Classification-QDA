@@ -1,4 +1,5 @@
 import numpy as np
+import itertools
 
 def data_aug_perm_3mode(inputs, outputs, j):
     if inputs.shape[0] == outputs.shape[0]:
@@ -230,3 +231,62 @@ def QuadripartiteQDA(inputs, outputs):
     outputs = np.append(outputs, outputs_new, axis=0)
     
     return inputs, outputs
+
+def _swap_pair_order_4ch_inplace(dst, src):
+    t = src[..., ::-1, ::-1].swapaxes(-1, -2)
+    dst[:, 0, :, :] = t[:, 0, :, :]
+    dst[:, 1, :, :] = t[:, 2, :, :]
+    dst[:, 2, :, :] = t[:, 1, :, :]
+    dst[:, 3, :, :] = t[:, 3, :, :]
+
+def _apply_perm_5mode_into(dst_inputs, src_inputs, perm_new_of_old):
+    N, C, H, W = src_inputs.shape
+    src = src_inputs.reshape(N, 5, 4, H, W)
+    dst = dst_inputs.reshape(N, 5, 4, H, W)
+    inv = np.argsort(np.asarray(perm_new_of_old, dtype=int))
+    for s_new in range(5):
+        old_s = int(inv[s_new])
+        if (s_new == 0 and old_s != 0) or (s_new != 0 and old_s == 0):
+            _swap_pair_order_4ch_inplace(dst[:, s_new, :, :, :], src[:, old_s, :, :, :])
+        else:
+            dst[:, s_new, :, :, :] = src[:, old_s, :, :, :]
+
+def apply_perm_5mode(inputs, perm):
+    out = np.empty_like(inputs)
+    _apply_perm_5mode_into(out, inputs, perm)
+    return out
+    
+def FivepartiteQDA(inputs, outputs, n=100, seed=0, mode="random"):
+    if inputs.shape[0] != outputs.shape[0]:
+        raise ValueError("Length of inputs and outputs doesn't match.")
+    if inputs.shape[1] != 20:
+        raise ValueError("inputs should have shape (N, 20, H, W) for 5-mode.")
+    if n < 1:
+        raise ValueError("n must be >= 1.")
+    all_perms = list(itertools.permutations(range(5)))
+    max_n = len(all_perms)
+    if n > max_n:
+        raise ValueError(f"n is too large: max is {max_n} for 5 modes.")
+    identity = tuple(range(5))
+    rest = [p for p in all_perms if p != identity]
+    if n == 1:
+        perms = [identity]
+    else:
+        if mode == "lex":
+            perms = [identity] + rest[: n - 1]
+        elif mode == "random":
+            rng = np.random.default_rng(seed)
+            idx = rng.choice(len(rest), size=n - 1, replace=False)
+            perms = [identity] + [rest[i] for i in idx]
+        else:
+            raise ValueError("mode must be 'random' or 'lex'.")
+    N, C, H, W = inputs.shape
+    inputs_aug = np.empty((N * n, C, H, W), dtype=inputs.dtype)
+    outputs_aug = np.tile(outputs, (n,) + (1,) * (outputs.ndim - 1))
+    for t, p in enumerate(perms):
+        sl = slice(t * N, (t + 1) * N)
+        _apply_perm_5mode_into(inputs_aug[sl], inputs, p)
+        print(t + 1, p)
+    return inputs_aug, outputs_aug
+
+ 

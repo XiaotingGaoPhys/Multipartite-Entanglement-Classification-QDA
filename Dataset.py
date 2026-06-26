@@ -32,17 +32,17 @@ def TripartiteData(num_states=30000, include_mc=False):
     if include_mc:
         DATA_DIR = os.getenv("CO_DATA_PATH", "/data")
 
-        inputfs_mc = np.array(h5py.File(os.path.join(DATA_DIR, "3mode", "MC data", "state-3mode100-inputs-111-MC100000.h5"), 'r')["inputs"])
-        inputbi_mc = np.array(h5py.File(os.path.join(DATA_DIR, "3mode", "MC data", "state-3mode100-inputs-12-MC100000.h5"), 'r')["inputs"])
-        inputfe_mc = np.array(h5py.File(os.path.join(DATA_DIR, "3mode", "MC data", "state-3mode100-inputs-3-MC100000.h5"), 'r')["inputs"])
+        inputfs_mc = np.array(h5py.File(os.path.join(DATA_DIR, "3mode", "Monte Carlo data", "state-3mode100-inputs-111-MC100000.h5"), 'r')["inputs"])
+        inputbi_mc = np.array(h5py.File(os.path.join(DATA_DIR, "3mode", "Monte Carlo data", "state-3mode100-inputs-12-MC100000.h5"), 'r')["inputs"])
+        inputfe_mc = np.array(h5py.File(os.path.join(DATA_DIR, "3mode", "Monte Carlo data", "state-3mode100-inputs-3-MC100000.h5"), 'r')["inputs"])
 
         outputfs_mc = np.tile([1, 0, 0], (inputfs_mc.shape[0], 1))
         outputbi_mc = np.tile([0, 1, 0], (inputbi_mc.shape[0], 1))
         outputfe_mc = np.tile([0, 0, 1], (inputfe_mc.shape[0], 1))
         
-        inputfs_mc_test = np.array(h5py.File(os.path.join(DATA_DIR, "3mode", "MC data", "state-3mode33-inputs-111-MC100000.h5"), 'r')["inputs"])
-        inputbi_mc_test = np.array(h5py.File(os.path.join(DATA_DIR, "3mode", "MC data", "state-3mode34-inputs-12-MC100000.h5"), 'r')["inputs"])
-        inputfe_mc_test = np.array(h5py.File(os.path.join(DATA_DIR, "3mode", "MC data", "state-3mode33-inputs-3-MC100000.h5"), 'r')["inputs"])
+        inputfs_mc_test = np.array(h5py.File(os.path.join(DATA_DIR, "3mode", "Monte Carlo data", "state-3mode33-inputs-111-MC100000.h5"), 'r')["inputs"])
+        inputbi_mc_test = np.array(h5py.File(os.path.join(DATA_DIR, "3mode", "Monte Carlo data", "state-3mode34-inputs-12-MC100000.h5"), 'r')["inputs"])
+        inputfe_mc_test = np.array(h5py.File(os.path.join(DATA_DIR, "3mode", "Monte Carlo data", "state-3mode33-inputs-3-MC100000.h5"), 'r')["inputs"])
 
         outputfs_mc_test = np.tile([1, 0, 0], (inputfs_mc.shape[0], 1))
         outputbi_mc_test = np.tile([0, 1, 0], (inputbi_mc.shape[0], 1))
@@ -139,3 +139,22 @@ def QuadripartiteCatData(num_states=12500):
     outputs_test = outputs_all[randomize[Ntrain:]]
 
     return inputs, outputs, inputs_test, outputs_test
+
+def FivepartiteData(num_states=7000):
+    DATA_DIR = os.getenv("CO_DATA_PATH", "/data")
+
+    inputs_all = np.array(h5py.File(os.path.join(DATA_DIR, "5mode", "state-5mode7000-inputs.h5"), 'r')["inputs"])
+    outputs_all = np.array(h5py.File(os.path.join(DATA_DIR, "5mode", "state-5mode7000-outputs.h5"), 'r')["outputs"])
+    
+    Ntrain = int(min(num_states, inputs_all.shape[0]) * 0.8)
+    randomize = np.arange(inputs_all.shape[0])
+    np.random.shuffle(randomize)
+    inputs = inputs_all[randomize[0:Ntrain]]
+    outputs = outputs_all[randomize[0:Ntrain]]
+    
+    inputs_test = inputs_all[randomize[Ntrain:]]
+    outputs_test = outputs_all[randomize[Ntrain:]]
+
+    return inputs, outputs, inputs_test, outputs_test
+
+    

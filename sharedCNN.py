@@ -15,7 +15,7 @@ def shared_sub_model(input_shape):
         Dense(1024, activation='relu'),
         Dropout(0.7),
         Dense(256, activation='relu'),
-        Dropout(0.7),
+        Dropout(0.5),
         Dense(8, activation='relu')
     ])
     return model
@@ -58,4 +58,29 @@ def QuadripartiteModel():
     dense3 = Dense(units=5, activation='softmax')(dense2)
 
     model = Model(inputs=[input1, input2, input3, input4], outputs=dense3)
+    return model
+
+
+def FivepartiteModel():
+    shared_model = shared_sub_model([24, 24, 4])
+
+    input1 = Input(shape=[24, 24, 4])
+    input2 = Input(shape=[24, 24, 4])
+    input3 = Input(shape=[24, 24, 4])
+    input4 = Input(shape=[24, 24, 4])
+    input5 = Input(shape=[24, 24, 4])
+
+    output1 = shared_model(input1)
+    output2 = shared_model(input2)
+    output3 = shared_model(input3)
+    output4 = shared_model(input4)
+    output5 = shared_model(input5)
+
+    concatenated = Concatenate()([output1, output2, output3, output4, output5])
+
+    dense1 = Dense(units=16, activation='relu')(concatenated)
+    dense2 = Dense(units=8, activation='relu')(dense1)
+    dense3 = Dense(units=7, activation='softmax')(dense2)
+
+    model = Model(inputs=[input1, input2, input3, input4, input5], outputs=dense3)
     return model
